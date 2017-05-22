@@ -68,7 +68,26 @@ class Main:
         #         print('{0} ({1})'.format(item['name'], item['id']))
 
         drive_interface = DriveInterface()
-        drive_interface.check_folder_content(service)
+        file_structure = drive_interface.check_folder_content(service)
+        self.pretty_print(file_structure)
+
+    def pretty_print(self, folder_structure):
+        print("Complete folder structure:")
+        self.pretty_print_aux(0, folder_structure)
+
+    def pretty_print_aux(self, level, obj_to_print):
+        indent = ""
+        for i in range(level):
+            indent += "   "
+
+        try:
+            for item in obj_to_print['content']:
+                print(indent, end='')
+                print("|- ", end='')
+                print(item['name'])
+                self.pretty_print_aux(level + 1, item)
+        except KeyError:
+            return
 
 if __name__ == '__main__':
     main_class = Main()
