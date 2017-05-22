@@ -16,6 +16,7 @@ from drive_interface import DriveInterface
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 CLIENT_SECRET_FILE = 'data/client_secret.json'
 APPLICATION_NAME = 'Drive API Python Quickstart'
+ROOT_FOLDER = 'FOTO UPLOAD'
 
 
 class Main:
@@ -47,7 +48,7 @@ class Main:
             print('Storing credentials to ' + credential_path)
         return credentials
 
-    def main(self):
+    def main(self, root_folder):
         """Shows basic usage of the Google Drive API.
     
         Creates a Google Drive API service object and outputs the names and IDs
@@ -67,7 +68,7 @@ class Main:
         #     for item in items:
         #         print('{0} ({1})'.format(item['name'], item['id']))
 
-        drive_interface = DriveInterface()
+        drive_interface = DriveInterface(root_folder)
         file_structure = drive_interface.check_folder_content(service)
         self.pretty_print(file_structure)
 
@@ -91,4 +92,4 @@ class Main:
 
 if __name__ == '__main__':
     main_class = Main()
-    main_class.main()
+    main_class.main(ROOT_FOLDER)

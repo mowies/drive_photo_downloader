@@ -3,7 +3,7 @@ class DriveInterfaceException(BaseException):
 
 
 class DriveInterface:
-    QUERY_PHOTO_UPLOAD_FOLDER = 'name=\'FOTO UPLOAD\' and ' \
+    QUERY_PHOTO_UPLOAD_FOLDER = 'name=\'{0}\' and ' \
                                 'mimeType=\'application/vnd.google-apps.folder\''
 
     QUERY_SUBFOLDER = '\'{0}\' in parents and ' \
@@ -13,9 +13,11 @@ class DriveInterface:
     QUERY_MEDIA_FILES = '\'{0}\' in parents and ' \
                         '(mimeType contains \'image/\' or mimeType contains \'video/\')'
 
+    def __init__(self, root_folder):
+        self._root_folder = root_folder
+
     def check_folder_content(self, drive_service):
-        complete_structure = {}
-        complete_structure['content'] = []
+        complete_structure = {'content': []}
 
         upload_folder = self.load_upload_folder(drive_service)
         upload_folder['content'] = []
@@ -81,7 +83,9 @@ class DriveInterface:
         return year_folders
 
     def load_upload_folder(self, drive_service):
-        upload_folder_response = drive_service.files().list(q=self.QUERY_PHOTO_UPLOAD_FOLDER, spaces='drive').execute()
+        upload_folder_response = drive_service.files().list(q=self.QUERY_PHOTO_UPLOAD_FOLDER.format(self._root_folder),
+                                                            spaces='drive')\
+            .execute()
         upload_folder = upload_folder_response.get('files', [])
 
         if len(upload_folder) > 1:
