@@ -2,6 +2,7 @@ import httplib2
 import os
 import argparse
 import sched
+import json
 
 from apiclient import discovery
 from oauth2client import client
@@ -15,14 +16,20 @@ from disk_interface import DiskInterface
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/drive-python-quickstart.json
 SCOPES = ["https://www.googleapis.com/auth/drive"]
-CLIENT_SECRET_FILE = 'data/client_secret.json'
 APPLICATION_NAME = 'Drive API Python Quickstart'
 
-DRIVE_ROOT_FOLDER = 'FOTO UPLOAD'
-LOCAL_ROOT_FOLDER = 'DESTINATION/'
+CONFIG_PATH = 'data/config.json'
+CONFIG_DRIVE = 'drive_root_folder'
+CONFIG_LOCAL = 'local_root_folder'
+CONFIG_CLIENT_SECRET = 'client_secret_path'
 
 
 class Main:
+    def __init__(self):
+        self._drive_root_folder = ''
+        self._local_root_folder = ''
+        self._client_secret_path = ''
+
     def get_credentials(self, flags):
         """Gets valid user credentials from storage.
     
@@ -42,13 +49,13 @@ class Main:
         store = Storage(credential_path)
         credentials = store.get()
         if not credentials or credentials.invalid:
-            flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
+            flow = client.flow_from_clientsecrets(self._client_secret_path, SCOPES)
             flow.user_agent = APPLICATION_NAME
             credentials = tools.run_flow(flow, store, flags)
             print('Storing credentials to ' + credential_path)
         return credentials
 
-    def main(self, root_folder):
+    def main(self):
         """Shows basic usage of the Google Drive API.
     
         Creates a Google Drive API service object and read from drive and saves to disk.
@@ -58,16 +65,34 @@ class Main:
         http = credentials.authorize(httplib2.Http())
         service = discovery.build('drive', 'v3', http=http)
 
-        drive_interface = DriveInterface(root_folder, service)
-        disk_interface = DiskInterface(LOCAL_ROOT_FOLDER, drive_interface)
+        drive_interface = DriveInterface(self._drive_root_folder, service)
+        disk_interface = DiskInterface(self._local_root_folder, drive_interface)
         file_structure = drive_interface.check_folder_content()
         self.pretty_print(file_structure)
 
         disk_interface.write_all(file_structure)
 
-        # for file in file_structure['content'][0]['content'][0]['content'][0]['content']:
-        #     file_stream = drive_interface.download_file(file)
-        #     disk_interface.write_image_file(file_stream, file['name'])
+    def get_config(self):
+        try:
+            with open(CONFIG_PATH, 'r') as config_file:
+                config = json.load(config_file)
+        except FileNotFoundError:
+            config_dict = {
+                CONFIG_DRIVE: "",
+                CONFIG_LOCAL: "",
+                CONFIG_CLIENT_SECRET: ""
+            }
+
+            with open(CONFIG_PATH, 'w') as config_file:
+                json.dump(config_dict, config_file)
+
+            print('This is probably the first start of this script. '
+                  'Please fill in the configuration file (data/config.json)')
+            return False
+
+        self._drive_root_folder = config[CONFIG_DRIVE]
+        self._local_root_folder = config[CONFIG_LOCAL]
+        return True
 
     def pretty_print(self, folder_structure):
         print("Complete folder structure:")
@@ -89,4 +114,8 @@ class Main:
 
 if __name__ == '__main__':
     main_class = Main()
-    main_class.main(DRIVE_ROOT_FOLDER)
+
+    config_done = main_class.get_config()
+
+    if config_done:
+        main_class.main()
