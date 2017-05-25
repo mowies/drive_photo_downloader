@@ -1,20 +1,18 @@
-import httplib2
-import os
 import argparse
-import sched
 import json
+import os
 
+import httplib2
 from apiclient import discovery
+from src.disk_interface import DiskInterface
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
-from drive_interface import DriveInterface
-from disk_interface import DiskInterface
-
+from src.drive_interface import DriveInterface
 
 # If modifying these scopes, delete your previously saved credentials
-# at ~/.credentials/drive-python-quickstart.json
+# at ~/.credentials/credentials.json
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 APPLICATION_NAME = 'Drive API Python Quickstart'
 
@@ -44,7 +42,7 @@ class Main:
         if not os.path.exists(credential_dir):
             os.makedirs(credential_dir)
         credential_path = os.path.join(credential_dir,
-                                       'drive-python-quickstart.json')
+                                       'credentials.json')
 
         store = Storage(credential_path)
         credentials = store.get()
