@@ -18,10 +18,14 @@ class DiskInterface:
             for event_folder in year_folder['content']:
                 for img_file in event_folder['content']:
                     rel_path = os.path.join(year_folder['name'], event_folder['name'])
-                    complete_path = os.path.join(rel_path, img_file['name'])
-                    img_stream = self._drive_interface.download_file(img_file)
-                    self.create_folder(rel_path)
-                    self.write_image_file(img_stream, complete_path)
+                    complete_path = os.path.join(self._root_path, rel_path, img_file['name'])
+
+                    if not os.path.exists(os.path.join(self._root_path, complete_path)):
+                        img_stream = self._drive_interface.download_file(img_file)
+                        self.create_folder(rel_path)
+                        self.write_image_file(img_stream, complete_path)
+                    else:
+                        print('File already exists: {0}'.format(img_file['name']))
 
     def create_folder(self, rel_path):
         path = os.path.join(self._root_path, rel_path)

@@ -78,9 +78,9 @@ class Main:
                 config = json.load(config_file)
         except FileNotFoundError:
             config_dict = {
-                CONFIG_DRIVE: "",
-                CONFIG_LOCAL: "",
-                CONFIG_CLIENT_SECRET: ""
+                CONFIG_DRIVE: "please enter only folder",
+                CONFIG_LOCAL: "please enter the absolute path",
+                CONFIG_CLIENT_SECRET: "please enter relative path to client secret"
             }
 
             with open(CONFIG_PATH, 'w') as config_file:
@@ -90,8 +90,13 @@ class Main:
                   'Please fill in the configuration file (data/config.json)')
             return False
 
+        if not os.path.isabs(config[CONFIG_LOCAL]):
+            print('Please enter the ABSOLUTE path for the local root folder in the configuration file.')
+            return False
+
         self._drive_root_folder = config[CONFIG_DRIVE]
         self._local_root_folder = config[CONFIG_LOCAL]
+        self._client_secret_path = config[CONFIG_CLIENT_SECRET]
         return True
 
     def pretty_print(self, folder_structure):
