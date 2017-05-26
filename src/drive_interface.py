@@ -113,3 +113,12 @@ class DriveInterface:
             print('File: {0} | {1}%'.format(file['name'], int(status.progress() * 100)))
 
         return stream
+
+    def trash_file(self, file):
+        metadata = {
+            'trashed': True
+        }
+        self._drive_service.files().update(fileId=file['id'], body=metadata).execute()
+
+    def delete_file(self, file):
+        self._drive_service.files().delete(fileId=file['id']).execute()

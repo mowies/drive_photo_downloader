@@ -8,9 +8,10 @@ class DiskInterfaceException(BaseException):
 
 
 class DiskInterface:
-    def __init__(self, root_path, drive_interface):
+    def __init__(self, root_path, delete_method, drive_interface):
         self._root_path = root_path
         self._drive_interface = drive_interface
+        self._delete_method = delete_method
 
     def copy_to_disk(self, structure):
         root_folder = structure['content'][0]
@@ -24,6 +25,11 @@ class DiskInterface:
                         img_stream = self._drive_interface.download_file(img_file)
                         self.create_folder(rel_path)
                         self.write_image_file(img_stream, complete_path)
+
+                        if self._delete_method == 0:
+                            self._drive_interface.trash_file(img_file)
+                        else:
+                            self._drive_interface.delete_file(img_file)
                     else:
                         print('File already exists: {0}'.format(img_file['name']))
 

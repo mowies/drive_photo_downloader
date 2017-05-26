@@ -23,6 +23,11 @@ CONFIG_DRIVE = 'drive_root_folder'
 CONFIG_LOCAL = 'local_root_folder'
 CONFIG_CLIENT_SECRET = 'client_secret_path'
 CONFIG_BACKUP_INTERVAL = 'backup_interval'
+CONFIG_DELETE_METHOD = 'delete_method'
+
+
+class DriveDownloaderException(BaseException):
+    pass
 
 
 class Main:
@@ -31,6 +36,7 @@ class Main:
         self._local_root_folder = ''
         self._client_secret_path = ''
         self._backup_interval = 0.0
+        self._delete_method = 0  # 0 for trash, 1 for delete
 
     def get_credentials(self, flags):
         """Gets valid user credentials from storage.
@@ -67,7 +73,7 @@ class Main:
         service = discovery.build('drive', 'v3', http=http)
 
         drive_interface = DriveInterface(self._drive_root_folder, service)
-        disk_interface = DiskInterface(self._local_root_folder, drive_interface)
+        disk_interface = DiskInterface(self._local_root_folder, self._delete_method, drive_interface)
 
         print('Starting backup loop...')
         self.loop(drive_interface, disk_interface)
@@ -95,7 +101,8 @@ class Main:
                 CONFIG_DRIVE: "please enter only folder",
                 CONFIG_LOCAL: "please enter the absolute path",
                 CONFIG_CLIENT_SECRET: "please enter relative path to client secret",
-                CONFIG_BACKUP_INTERVAL: "please enter backup interval in seconds"
+                CONFIG_BACKUP_INTERVAL: "please enter backup interval in seconds",
+                CONFIG_DELETE_METHOD: "trash"
             }
 
             config_path = "".join([folder for folder in ntpath.split(CONFIG_PATH)[0:-1]])
@@ -116,6 +123,14 @@ class Main:
         self._local_root_folder = config[CONFIG_LOCAL]
         self._client_secret_path = config[CONFIG_CLIENT_SECRET]
         self._backup_interval = float(config[CONFIG_BACKUP_INTERVAL])
+
+        if config[CONFIG_DELETE_METHOD] == 'trash':
+            self._delete_method = 0
+        elif config[CONFIG_DELETE_METHOD] == 'delete':
+            self._delete_method = 1
+        else:
+            raise DriveDownloaderException('Delete method configuration not correctly set.\n'
+                                           'Please set to \"trash\" (move to trash) or \"delete\" (delete permanently)')
         return True
 
     def pretty_print(self, folder_structure):
