@@ -23,11 +23,10 @@ class DiskInterface:
                     rel_path = os.path.join(year_folder['name'], event_folder['name'])
                     complete_path = os.path.join(self._root_path, rel_path, img_file['name'])
 
-                    if not os.path.exists(os.path.join(self._root_path, complete_path)):
+                    if not os.path.exists(complete_path):
                         img_stream = self._drive_interface.download_file(img_file)
                         self.create_folder(rel_path)
                         self.write_image_file(img_stream, complete_path)
-
                         if self._delete_method == 0:
                             self._drive_interface.trash_file(img_file)
                         else:
@@ -36,6 +35,7 @@ class DiskInterface:
                         Logger.log('File already exists: {0}'.format(img_file['name']))
 
     def create_folder(self, rel_path):
+        Logger.log('Creating folders: {0}'.format(rel_path))
         path = os.path.join(self._root_path, rel_path)
         os.makedirs(path, exist_ok=True)
 

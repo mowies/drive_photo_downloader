@@ -76,7 +76,8 @@ class DriveInterface:
             media_response = self._drive_service.files().list(
                 q=self.QUERY_IMAGE_FILES.format(event_folder['id']),
                 spaces='drive',
-                pageToken=media_page_token) \
+                pageToken=media_page_token,
+                fields='files(id,mimeType,name,parents,trashed),nextPageToken') \
                 .execute()
 
             media_files += media_response.get('files', [])
