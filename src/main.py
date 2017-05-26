@@ -1,9 +1,8 @@
-import httplib2
 import os
 import argparse
-import sched
 import json
 import ntpath
+import time
 
 import httplib2
 from apiclient import discovery
@@ -23,6 +22,7 @@ CONFIG_PATH = 'data/config.json'
 CONFIG_DRIVE = 'drive_root_folder'
 CONFIG_LOCAL = 'local_root_folder'
 CONFIG_CLIENT_SECRET = 'client_secret_path'
+CONFIG_BACKUP_INTERVAL = 'backup_interval'
 
 
 class Main:
@@ -30,6 +30,7 @@ class Main:
         self._drive_root_folder = ''
         self._local_root_folder = ''
         self._client_secret_path = ''
+        self._backup_interval = 0.0
 
     def get_credentials(self, flags):
         """Gets valid user credentials from storage.
@@ -44,8 +45,7 @@ class Main:
         credential_dir = os.path.join(home_dir, '.credentials')
         if not os.path.exists(credential_dir):
             os.makedirs(credential_dir)
-        credential_path = os.path.join(credential_dir,
-                                       'credentials.json')
+        credential_path = os.path.join(credential_dir, 'credentials.json')
 
         store = Storage(credential_path)
         credentials = store.get()
@@ -68,10 +68,23 @@ class Main:
 
         drive_interface = DriveInterface(self._drive_root_folder, service)
         disk_interface = DiskInterface(self._local_root_folder, drive_interface)
-        file_structure = drive_interface.check_folder_content()
-        self.pretty_print(file_structure)
 
-        disk_interface.write_all(file_structure)
+        print('Starting backup loop...')
+        self.loop(drive_interface, disk_interface)
+
+    def loop(self, drive_interface, disk_interface):
+        start_time = time.time()
+
+        while True:
+            print('Updating file structure... (Time: {0})'.format(str(time.strftime("%d.%m.%Y - %H:%M:%S", time.localtime()))))
+            file_structure = drive_interface.check_folder_content()
+            # self.pretty_print(file_structure)
+
+            print('Starting to download new media...')
+            disk_interface.copy_to_disk(file_structure)
+
+            print('Going to sleep for 5 minutes...\n')
+            time.sleep(self._backup_interval - ((time.time() - start_time) % self._backup_interval))
 
     def get_config(self):
         try:
@@ -81,7 +94,8 @@ class Main:
             config_dict = {
                 CONFIG_DRIVE: "please enter only folder",
                 CONFIG_LOCAL: "please enter the absolute path",
-                CONFIG_CLIENT_SECRET: "please enter relative path to client secret"
+                CONFIG_CLIENT_SECRET: "please enter relative path to client secret",
+                CONFIG_BACKUP_INTERVAL: "please enter backup interval in seconds"
             }
 
             config_path = "".join([folder for folder in ntpath.split(CONFIG_PATH)[0:-1]])
@@ -101,6 +115,7 @@ class Main:
         self._drive_root_folder = config[CONFIG_DRIVE]
         self._local_root_folder = config[CONFIG_LOCAL]
         self._client_secret_path = config[CONFIG_CLIENT_SECRET]
+        self._backup_interval = float(config[CONFIG_BACKUP_INTERVAL])
         return True
 
     def pretty_print(self, folder_structure):

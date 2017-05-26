@@ -12,7 +12,7 @@ class DiskInterface:
         self._root_path = root_path
         self._drive_interface = drive_interface
 
-    def write_all(self, structure):
+    def copy_to_disk(self, structure):
         root_folder = structure['content'][0]
         for year_folder in root_folder['content']:
             for event_folder in year_folder['content']:

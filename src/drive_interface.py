@@ -86,7 +86,7 @@ class DriveInterface:
 
     def load_year_folders(self, upload_folder):
         year_folder_response = self._drive_service.files().list(q=self.QUERY_SUBFOLDER.format(upload_folder['id']),
-                                                          spaces='drive') \
+                                                                spaces='drive') \
             .execute()
         year_folders = year_folder_response.get('files', [])
         return year_folders
@@ -113,6 +113,3 @@ class DriveInterface:
             print('File: {0} | {1}%'.format(file['name'], int(status.progress() * 100)))
 
         return stream
-
-    def copy_to_folder(self):
-        pass
