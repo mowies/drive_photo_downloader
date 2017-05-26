@@ -3,6 +3,7 @@ import os
 import argparse
 import sched
 import json
+import ntpath
 
 from apiclient import discovery
 from oauth2client import client
@@ -82,6 +83,9 @@ class Main:
                 CONFIG_LOCAL: "please enter the absolute path",
                 CONFIG_CLIENT_SECRET: "please enter relative path to client secret"
             }
+
+            config_path = "".join([folder for folder in ntpath.split(CONFIG_PATH)[0:-1]])
+            os.makedirs(config_path, exist_ok=True)
 
             with open(CONFIG_PATH, 'w') as config_file:
                 json.dump(config_dict, config_file)
