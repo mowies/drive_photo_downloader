@@ -12,6 +12,7 @@ from oauth2client.file import Storage
 
 from src.disk_interface import DiskInterface
 from src.drive_interface import DriveInterface
+from src.logger import Logger
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/credentials.json
@@ -59,7 +60,7 @@ class Main:
             flow = client.flow_from_clientsecrets(self._client_secret_path, SCOPES)
             flow.user_agent = APPLICATION_NAME
             credentials = tools.run_flow(flow, store, flags)
-            print('Storing credentials to ' + credential_path)
+            Logger.log('Storing credentials to ' + credential_path)
         return credentials
 
     def main(self):
@@ -75,21 +76,21 @@ class Main:
         drive_interface = DriveInterface(self._drive_root_folder, service)
         disk_interface = DiskInterface(self._local_root_folder, self._delete_method, drive_interface)
 
-        print('Starting backup loop...')
+        Logger.log('Starting backup loop...')
         self.loop(drive_interface, disk_interface)
 
     def loop(self, drive_interface, disk_interface):
         start_time = time.time()
 
         while True:
-            print('Updating file structure... (Time: {0})'.format(str(time.strftime("%d.%m.%Y - %H:%M:%S", time.localtime()))))
+            Logger.log('Updating file structure...')
             file_structure = drive_interface.check_folder_content()
             # self.pretty_print(file_structure)
 
-            print('Starting to download new media...')
+            Logger.log('Starting to download new media...')
             disk_interface.copy_to_disk(file_structure)
 
-            print('Going to sleep for 5 minutes...\n')
+            Logger.log('Going to sleep for 5 minutes...\n')
             time.sleep(self._backup_interval - ((time.time() - start_time) % self._backup_interval))
 
     def get_config(self):
@@ -111,12 +112,12 @@ class Main:
             with open(CONFIG_PATH, 'w') as config_file:
                 json.dump(config_dict, config_file)
 
-            print('This is probably the first start of this script. '
+                Logger.log('This is probably the first start of this script. '
                   'Please fill in the configuration file (data/config.json)')
             return False
 
         if not os.path.isabs(config[CONFIG_LOCAL]):
-            print('Please enter the ABSOLUTE path for the local root folder in the configuration file.')
+            Logger.log('Please enter the ABSOLUTE path for the local root folder in the configuration file.')
             return False
 
         self._drive_root_folder = config[CONFIG_DRIVE]
@@ -134,7 +135,7 @@ class Main:
         return True
 
     def pretty_print(self, folder_structure):
-        print("Complete folder structure:")
+        Logger.log("Complete folder structure:")
         self.pretty_print_aux(0, folder_structure)
 
     def pretty_print_aux(self, level, obj_to_print):

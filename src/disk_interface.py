@@ -2,6 +2,8 @@ import os
 
 from PIL import Image
 
+from src.logger import Logger
+
 
 class DiskInterfaceException(BaseException):
     pass
@@ -31,7 +33,7 @@ class DiskInterface:
                         else:
                             self._drive_interface.delete_file(img_file)
                     else:
-                        print('File already exists: {0}'.format(img_file['name']))
+                        Logger.log('File already exists: {0}'.format(img_file['name']))
 
     def create_folder(self, rel_path):
         path = os.path.join(self._root_path, rel_path)

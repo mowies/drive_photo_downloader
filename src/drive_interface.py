@@ -1,5 +1,8 @@
 import io
+
 from googleapiclient.http import MediaIoBaseDownload
+
+from src.logger import Logger
 
 
 class DriveInterfaceException(BaseException):
@@ -110,7 +113,7 @@ class DriveInterface:
         done = False
         while not done:
             status, done = downloader.next_chunk()
-            print('File: {0} | {1}%'.format(file['name'], int(status.progress() * 100)))
+            Logger.log('File: {0} | {1}%'.format(file['name'], int(status.progress() * 100)))
 
         return stream
 
