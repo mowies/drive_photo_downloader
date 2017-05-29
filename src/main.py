@@ -17,7 +17,7 @@ from src.logger import Logger
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/credentials.json
 SCOPES = ["https://www.googleapis.com/auth/drive"]
-APPLICATION_NAME = 'Drive API Python Quickstart'
+APPLICATION_NAME = 'Google Drive Automatic Media Downloader'
 
 CONFIG_PATH = 'data/config.json'
 CONFIG_DRIVE = 'drive_root_folder'
@@ -33,6 +33,7 @@ class DriveDownloaderException(BaseException):
 
 class Main:
     def __init__(self):
+        self._logger = Logger()
         self._drive_root_folder = ''
         self._local_root_folder = ''
         self._client_secret_path = ''
@@ -60,7 +61,7 @@ class Main:
             flow = client.flow_from_clientsecrets(self._client_secret_path, SCOPES)
             flow.user_agent = APPLICATION_NAME
             credentials = tools.run_flow(flow, store, flags)
-            Logger.log('Storing credentials to ' + credential_path)
+            self._logger.log('Storing credentials to ' + credential_path)
         return credentials
 
     def main(self):
@@ -73,24 +74,25 @@ class Main:
         http = credentials.authorize(httplib2.Http())
         service = discovery.build('drive', 'v3', http=http)
 
-        drive_interface = DriveInterface(self._drive_root_folder, service)
-        disk_interface = DiskInterface(self._local_root_folder, self._delete_method, drive_interface)
+        drive_interface = DriveInterface(self._logger, self._drive_root_folder, service)
+        disk_interface = DiskInterface(self._logger, self._local_root_folder, self._delete_method, drive_interface)
 
-        Logger.log('Starting backup loop...')
+        self._logger.log('Starting backup loop...')
         self.loop(drive_interface, disk_interface)
 
     def loop(self, drive_interface, disk_interface):
         start_time = time.time()
 
         while True:
-            Logger.log('Updating file structure...')
+            self._logger.log('Updating file structure...')
             file_structure = drive_interface.check_folder_content()
             # self.pretty_print(file_structure)
 
-            Logger.log('Starting to download new media...')
+            self._logger.log('Starting to download new media...')
             disk_interface.copy_to_disk(file_structure)
+            self._logger.log('Media download done.')
 
-            Logger.log('Going to sleep for 5 minutes...\n')
+            self._logger.log('Going to sleep for 5 minutes...\n')
             time.sleep(self._backup_interval - ((time.time() - start_time) % self._backup_interval))
 
     def get_config(self):
@@ -112,12 +114,12 @@ class Main:
             with open(CONFIG_PATH, 'w') as config_file:
                 json.dump(config_dict, config_file)
 
-                Logger.log('This is probably the first start of this script. '
-                  'Please fill in the configuration file (data/config.json)')
+                self._logger.log('This is probably the first start of this script. '
+                                 'Please fill in the configuration file (data/config.json)')
             return False
 
         if not os.path.isabs(config[CONFIG_LOCAL]):
-            Logger.log('Please enter the ABSOLUTE path for the local root folder in the configuration file.')
+            self._logger.log('Please enter the ABSOLUTE path for the local root folder in the configuration file.')
             return False
 
         self._drive_root_folder = config[CONFIG_DRIVE]
@@ -135,7 +137,7 @@ class Main:
         return True
 
     def pretty_print(self, folder_structure):
-        Logger.log("Complete folder structure:")
+        self._logger.log("Complete folder structure:")
         self.pretty_print_aux(0, folder_structure)
 
     def pretty_print_aux(self, level, obj_to_print):

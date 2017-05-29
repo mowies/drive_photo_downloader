@@ -2,15 +2,14 @@ import os
 
 from PIL import Image
 
-from src.logger import Logger
-
 
 class DiskInterfaceException(BaseException):
     pass
 
 
 class DiskInterface:
-    def __init__(self, root_path, delete_method, drive_interface):
+    def __init__(self, logger, root_path, delete_method, drive_interface):
+        self._logger = logger
         self._root_path = root_path
         self._drive_interface = drive_interface
         self._delete_method = delete_method
@@ -32,10 +31,10 @@ class DiskInterface:
                         else:
                             self._drive_interface.delete_file(img_file)
                     else:
-                        Logger.log('File already exists: {0}'.format(img_file['name']))
+                        self._logger.log('File already exists: {0}'.format(img_file['name']))
 
     def create_folder(self, rel_path):
-        Logger.log('Creating folders: {0}'.format(rel_path))
+        self._logger.log('Creating folder: {0}'.format(rel_path))
         path = os.path.join(self._root_path, rel_path)
         os.makedirs(path, exist_ok=True)
 

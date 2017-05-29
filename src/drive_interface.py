@@ -2,8 +2,6 @@ import io
 
 from googleapiclient.http import MediaIoBaseDownload
 
-from src.logger import Logger
-
 
 class DriveInterfaceException(BaseException):
     pass
@@ -25,7 +23,8 @@ class DriveInterface:
                         'mimeType contains \'video/\' and ' \
                         'trashed=false'
 
-    def __init__(self, root_folder, drive_service):
+    def __init__(self, logger, root_folder, drive_service):
+        self._logger = logger
         self._root_folder = root_folder
         self._drive_service = drive_service
 
@@ -114,7 +113,7 @@ class DriveInterface:
         done = False
         while not done:
             status, done = downloader.next_chunk()
-            Logger.log('File: {0} | {1}%'.format(file['name'], int(status.progress() * 100)))
+            self._logger.log('File: {0} | {1}%'.format(file['name'], int(status.progress() * 100)))
 
         return stream
 
