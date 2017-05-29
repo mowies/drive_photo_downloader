@@ -3,8 +3,9 @@ import argparse
 import json
 import ntpath
 import time
-
 import httplib2
+
+from collections import OrderedDict
 from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
@@ -100,13 +101,12 @@ class Main:
             with open(CONFIG_PATH, 'r') as config_file:
                 config = json.load(config_file)
         except FileNotFoundError:
-            config_dict = {
-                CONFIG_DRIVE: "please enter only folder",
-                CONFIG_LOCAL: "please enter the absolute path",
-                CONFIG_CLIENT_SECRET: "please enter relative path to client secret",
-                CONFIG_BACKUP_INTERVAL: "please enter backup interval in seconds",
-                CONFIG_DELETE_METHOD: "trash"
-            }
+            config_dict = OrderedDict()
+            config_dict[CONFIG_DRIVE] = "please enter only folder"
+            config_dict[CONFIG_LOCAL] = "please enter the absolute path"
+            config_dict[CONFIG_CLIENT_SECRET] = "please enter relative path to client secret"
+            config_dict[CONFIG_BACKUP_INTERVAL] = "please enter backup interval in seconds"
+            config_dict[CONFIG_DELETE_METHOD] = "trash"
 
             config_path = "".join([folder for folder in ntpath.split(CONFIG_PATH)[0:-1]])
             os.makedirs(config_path, exist_ok=True)
