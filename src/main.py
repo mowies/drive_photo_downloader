@@ -11,9 +11,9 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
-from src.disk_interface import DiskInterface
-from src.drive_interface import DriveInterface
-from src.logger import Logger
+from disk_interface import DiskInterface
+from drive_interface import DriveInterface
+from logger import Logger
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/credentials.json
