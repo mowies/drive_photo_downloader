@@ -2,8 +2,10 @@ import io
 
 from googleapiclient.http import MediaIoBaseDownload
 
+from downloader_exception import DriveDownloaderException
 
-class DriveInterfaceException(BaseException):
+
+class DriveInterfaceException(DriveDownloaderException):
     pass
 
 
@@ -22,6 +24,14 @@ class DriveInterface:
     QUERY_VIDEO_FILES = '\'{0}\' in parents and ' \
                         'mimeType contains \'video/\' and ' \
                         'trashed=false'
+
+    QUERY_FOLDER_STATE_FILE = 'name contains \' FOTOS.txt\' and ' \
+                              '\'{0}\' in parents and ' \
+                              'mimeType != \'application/vnd.google-apps.folder\' and ' \
+                              'trashed=false'
+
+    MEDIA_FILE_FIELDS = 'files(id,mimeType,name,parents,trashed),nextPageToken'
+    EVENT_FOLDER_FIELDS = 'nextPageToken, files(id, name)'
 
     def __init__(self, logger, root_folder, drive_service):
         self._logger = logger
@@ -62,7 +72,7 @@ class DriveInterface:
         event_folders_response = self._drive_service.files().list(
             q=self.QUERY_SUBFOLDER.format(year_folder['id']),
             spaces='drive',
-            fields='nextPageToken, files(id, name)',
+            fields=self.EVENT_FOLDER_FIELDS,
             pageToken=event_page_token) \
             .execute()
         event_folders = event_folders_response.get('files', [])
@@ -76,7 +86,7 @@ class DriveInterface:
                 q=self.QUERY_IMAGE_FILES.format(event_folder['id']),
                 spaces='drive',
                 pageToken=media_page_token,
-                fields='files(id,mimeType,name,parents,trashed),nextPageToken') \
+                fields=self.MEDIA_FILE_FIELDS) \
                 .execute()
 
             media_files += media_response.get('files', [])
@@ -101,7 +111,7 @@ class DriveInterface:
         upload_folder = upload_folder_response.get('files', [])
 
         if len(upload_folder) > 1:
-            raise DriveInterfaceException("Error: More than one photo upload folder!")
+            raise DriveInterfaceException('More than one photo upload folder!')
 
         upload_folder = upload_folder[0]
         return upload_folder
@@ -125,3 +135,24 @@ class DriveInterface:
 
     def delete_file(self, file):
         self._drive_service.files().delete(fileId=file['id']).execute()
+
+    def update_folder_state_file(self, folder, file_count):
+        new_filename = {'name': '{0} FOTOS.txt'.format(file_count)}
+        folder_state_file = self._drive_service.files().list(q=self.QUERY_FOLDER_STATE_FILE.format(folder['id']),
+                                                             fields=self.MEDIA_FILE_FIELDS,
+                                                             spaces='drive')\
+            .execute()
+
+        folder_state_file = folder_state_file.get('files', [])
+
+        if len(folder_state_file) == 1:
+            folder_state_file = folder_state_file[0]
+            self._drive_service.files().update(fileId=folder_state_file['id'], body=new_filename).execute()
+        elif len(folder_state_file) == 0:
+            new_filename['parents'] = [folder['id']]
+            self._drive_service.files().create(body=new_filename, fields='name,id').execute()
+        else:
+            for file in folder_state_file:
+                self.delete_file(file)
+            new_filename['parents'] = [folder['id']]
+            self._drive_service.files().create(body=new_filename, fields='name,id').execute()

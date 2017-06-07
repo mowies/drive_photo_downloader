@@ -4,6 +4,7 @@ import json
 import ntpath
 import time
 import httplib2
+import sys
 
 from collections import OrderedDict
 from apiclient import discovery
@@ -14,6 +15,7 @@ from oauth2client.file import Storage
 from disk_interface import DiskInterface
 from drive_interface import DriveInterface
 from logger import Logger
+from downloader_exception import DriveDownloaderException
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/credentials.json
@@ -28,10 +30,6 @@ CONFIG_BACKUP_INTERVAL = 'backup_interval'
 CONFIG_DELETE_METHOD = 'delete_method'
 
 
-class DriveDownloaderException(BaseException):
-    pass
-
-
 class Main:
     def __init__(self):
         self._logger = Logger()
@@ -40,6 +38,10 @@ class Main:
         self._client_secret_path = ''
         self._backup_interval = 0.0
         self._delete_method = 0  # 0 for trash, 1 for delete
+
+    @property
+    def logger(self):
+        return self._logger
 
     def get_credentials(self, flags):
         """Gets valid user credentials from storage.
@@ -132,7 +134,7 @@ class Main:
         elif config[CONFIG_DELETE_METHOD] == 'delete':
             self._delete_method = 1
         else:
-            raise DriveDownloaderException('Delete method configuration not correctly set.\n'
+            raise DriveDownloaderException('Delete method configuration not correctly set. '
                                            'Please set to \"trash\" (move to trash) or \"delete\" (delete permanently)')
         return True
 
@@ -155,9 +157,18 @@ class Main:
             return
 
 if __name__ == '__main__':
-    main_class = Main()
+    try:
+        main_class = Main()
 
-    config_done = main_class.get_config()
+        config_done = main_class.get_config()
 
-    if config_done:
-        main_class.main()
+        if config_done:
+            main_class.main()
+    except (Exception, BaseException) as e:
+        if main_class.logger is not None:
+            main_class.logger.log('Error: {0}'.format(str(e)))
+    except:
+        msg = sys.exc_info()[1]
+        time_str = time.strftime("%d.%m.%Y %H:%M:%S |", time.localtime())
+        with open("log/ERROR.txt", "w") as f:
+            f.write('{0} Error: {1}'.format(time_str, msg))
