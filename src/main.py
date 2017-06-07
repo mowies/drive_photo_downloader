@@ -169,6 +169,7 @@ if __name__ == '__main__':
             main_class.logger.log('Error: {0}'.format(str(e)))
     except:
         msg = sys.exc_info()[1]
-        time_str = time.strftime("%d.%m.%Y %H:%M:%S |", time.localtime())
-        with open("log/ERROR.txt", "w") as f:
-            f.write('{0} Error: {1}'.format(time_str, msg))
+        time_str_filename = time.strftime("%d_%m_%Y__%H_%M_%S", time.localtime())
+        time_str_msg = time.strftime("%d.%m.%Y %H:%M:%S |", time.localtime())
+        with open("log/ERROR_{0}.txt".format(time_str_filename), "w") as f:
+            f.write('{0} Error: {1}'.format(time_str_msg, msg))
