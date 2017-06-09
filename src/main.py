@@ -95,7 +95,7 @@ class Main:
             disk_interface.copy_to_disk(file_structure)
             self._logger.log('Media download done.')
 
-            self._logger.log('Going to sleep for {0} minutes...\n'.format(self._backup_interval % 60))
+            self._logger.log('Going to sleep for {0} minutes...\n'.format(self._backup_interval / 60))
             time.sleep(self._backup_interval - ((time.time() - start_time) % self._backup_interval))
 
     def get_config(self):
